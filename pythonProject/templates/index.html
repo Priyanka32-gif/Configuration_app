@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Function to get CSRF cookie value
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Check if the cookie name matches the CSRF token name
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Add click event listener to terminal tabs
+    $(document).on("click", ".terminal_tab", function() {
+        var terminalName = $(this).text().trim();
+        console.log("Terminal Name:", terminalName);
+
+        // Make an AJAX request to the server to get content for the selected tab
+        $.ajax({
+            url: "/get_content/",
+            type: "POST",
+            headers: {
+                // Include CSRF token in the request headers
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            data: {terminal_name: terminalName},
+            success: function(response) {
+                $("#content-container").html(response.content);
+                $("#name").val(response.content.name);
+                $("#server").val(response.content.server);
+                $("#share").val(response.content.share);
+                $("#destination").val(response.content.dest);
+                $("#path").val(response.content.path);
+                $("#progress").val(response.content.progress);
+                $("#temporary_path").val(response.content.tmp_path);
+                $("#file_pattern").val(response.content.file_pattern);
+                $("#root").val(response.content.root);
+
+                console.log(response.content);
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    });
+    // Click event handler for removeTerminal button
+    $("#removeTerminal").click(function() {
+
+        var terminalName = $("#terminal_name").val();
+        var csrftoken2 = getCookie("csrftoken"); // Retrieve CSRF token for removeTerminal AJAX request
+        console.log("delete pressed");
+        $.ajax({
+            url: "/removeTerminal/",
+            type: "POST",
+            dataType: "json",
+            data: { terminal_name: terminalName },
+            headers: { "X-CSRFToken": csrftoken2 }, // Include CSRF token in the headers
+            success: function(response) {
+                console.log(response.terminalName);
+            },
+            error: function(xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        });
+    });
+});
+</script>
+
+    <title>Config Generator</title>
+    <style>
+        body{
+        color: black;
+        background:#d3d3d3;
+        }
+        .left_container{
+        float: left;
+        width: 75%;
+        height: 300px;
+    }
+    .tab_container{
+        float: right;
+        width: 10%;
+        height: 300px;
+        background:white;
+        border:1px solid black;
+    }
+    .terminal_tab{
+        display:block;
+        cursor:pointer;
+        }
+    .terminal_tab:hover{
+        background-color:#ddd;
+        }
+    ul{
+        list-style:none
+        }
+    .content{
+        
+        }
+    </style>
+</head>
+<body>
+    <h2>Config Generator</h2>
+    <div class="content">
+        <div class="left_container">
+    <form id="terminalform" method="POST" action="/main/">
+        {% csrf_token %}
+      <fieldset>
+        <legend>Terminal Configuration</legend>
+        <table>
+            <tr>
+                <td>Terminal ID:</td>
+                <td><input type="text" id="name" name ="name" placeholder="123" value="{{ config.name }}"></td>
+            </tr>
+            <tr>
+                <td>Server:</td>
+                <td><input type="text" id="server" name = "server" placeholder="smb://10.1.21.25/" value="{{ config.server }}"></td>
+            </tr>
+            <tr>
+                <td>Share:</td>
+                <td><input type="text" id="share" name="share" placeholder="archive" value="{{ config.share }}"></td>
+            </tr>
+            <tr>
+                <td>Destination:</td>
+                <td><input type="text" id="destination" name="destination" placeholder="/file/73360052/2024/" value="{{ config.dest }}"></td>
+            </tr>
+            <tr>
+                <td>Path:</td>
+                <td><input type="text" id="path" name="path" placeholder="Enter Path" value="{{ config.path}}"></td>
+            </tr>
+            <tr>
+                <td>Progress:</td>
+                <td><input type="text" id="progress" name="progress" placeholder="2024-01-10" value="{{ config.progress }}"></td>
+            </tr>
+            <tr>
+                <td>Temporary Path:</td>
+                <td><input type="text" id="temporary_path" name="temporary_path" placeholder="/tmp/3360052" value="{{ config.temp_path }}"></td>
+            </tr>
+            <tr>
+                <td>File Pattern:</td>
+                <td><input type="text" id="file_pattern" name="file_pattern" placeholder=".*" value="{{ config.file_pattern }}"></td>
+            </tr>
+            <tr>
+                <td>Root:</td>
+                <td><input type="text" id="root" name="root" placeholder="/" value="{{ config.root }}"></td>
+            </tr>
+        </table>
+        <div align="middle" id="tags_container">
+            <button type="submit" id="add_edit_btn" value="add_edit_btn" name = add_edit_btn >Add/Edit Terminal Configuration</button>
+        </div>
+      </fieldset>
+        </div>
+        <div class="tab_container">
+            <ul id="tabs">
+                {% for terminal_name in terminal_name_list %}
+                    <li class="terminal_tab">{{ terminal_name }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+        <table>
+            <tr>
+                <td>Terminal Name:</td>
+                <td><input type="text" id="terminal_name" name = "terminal_name" required></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+            <div align="middle">
+                <button id="removeTerminal" onclick="removeTerminal()" value = 'removeTerminal' name = 'removeTerminal'>Remove Terminal</button>
+          </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Username:</td>
+                <td><input type="text" id="username" name="username"></td>
+            </tr>
+            <tr>
+                <td>Password:</td>
+                <td><input type="password" id="password" name="password"></td>
+            </tr>
+            <tr>
+                <td>FTP Username:</td>
+                <td><input type="text" id="ftp_username" name="ftp_username"></td>
+            </tr>
+            <tr>
+                <td>FTP Password:</td>
+                <td><input type="password" id="ftp_password" name="ftp_password"></td>
+            </tr>
+            <tr>
+                <td>FTP Host:</td>
+                <td><input type="text" id="ftp_host" name="ftp_host"></td>
+            </tr>
+            <tr>
+                <td>
+            <div align="middle">
+                <button  type="submit" id = "saveConfig" onclick="save_to_json()" value="saveConfig" name= "saveConfig" >Save Config</button>
+          </div>
+          <div align="middle">
+                <button  type="submit" id = "test_smb" onclick="test_smb()">Test SMB</button>
+          </div>
+          <div align="middle">
+                <button  type="submit" id = "test_ftb" onclick="test_ftb()">Test FTP</button>
+          </div>
+                </td>
+            </tr>
+        </table>
+    </form>
+</body>
+</html>

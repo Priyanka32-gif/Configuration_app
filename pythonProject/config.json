@@ -1,0 +1,23 @@
+{
+  "server_configs": [
+    {
+      "name": "Area 1 Terminal Wincor 73104210",
+      "server": "smb://10.1.23.57/",
+      "share": "JOURNAL",
+      "dest": "/files/73104210/2023/",
+      "path": "",
+      "progress": "2023-12-28",
+      "tmp_path": "/tmp/",
+      "file_pattern": ".",
+      "root": "/"
+    }
+  ],
+  "terminal_names":[
+"config1"
+],
+  "username": "PCBLCard",
+  "password": "*123456#PCBL",
+  "ftp_username": "Gokyo",
+  "ftp_password": "Goky0#2023@",
+  "ftp_host": "10.20.101.12:2121"
+}
